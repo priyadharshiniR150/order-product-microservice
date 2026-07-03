@@ -1,0 +1,48 @@
+package com.micro.order_service.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.micro.order_service.Entity.Order;
+import com.micro.order_service.Repository.OrderRepo;
+
+@Service
+public class OrderService {
+
+    @Autowired
+    private OrderRepo repo;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    public Object getOrderById(Long id) {
+
+        Order order = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // 🔥 CALL CUSTOMER SERVICE
+        Map customer = restTemplate.getForObject(
+                "http://localhost:8081/customers/" + order.getCustomerId(),
+                Map.class
+        );
+
+        // 🔥 MERGE RESPONSE
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("orderId", order.getId());
+        response.put("productName", order.getProductName());
+        response.put("quantity", order.getQuantity());
+        response.put("price", order.getPrice());
+
+        response.put("customerId", customer.get("id"));
+        response.put("customerName", customer.get("name"));
+        response.put("email", customer.get("email"));
+        response.put("phone", customer.get("phone"));
+
+        return response;
+    }
+}

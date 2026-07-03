@@ -1,0 +1,43 @@
+package com.micro.order_service.Controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.micro.order_service.Entity.Order;
+import com.micro.order_service.Service.OrderService;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @Autowired
+    private OrderService service;
+
+    // CREATE ORDER
+    @PostMapping
+    public Order createOrder(@RequestBody Order order) {
+        return service.createOrder(order);
+    }
+
+    // GET ALL ORDERS
+    @GetMapping
+    public List<Order> getAllOrders() {
+        return service.getAllOrders();
+    }
+
+    // GET ORDER BY ID + CUSTOMER DETAILS (MAP RESPONSE)
+    @GetMapping("/{id}")
+    public Object getOrderById(@PathVariable Long id) {
+        return service.getOrderById(id);
+    }
+
+    // DELETE ORDER
+    @DeleteMapping("/{id}")
+    public String deleteOrder(@PathVariable Long id) {
+        service.deleteOrder(id);
+        return "Order deleted successfully";
+    }
+}

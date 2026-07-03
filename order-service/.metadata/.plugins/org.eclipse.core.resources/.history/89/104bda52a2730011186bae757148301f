@@ -1,0 +1,51 @@
+package com.micro.order_service.JwT;
+
+import java.security.Key;
+import java.util.Date;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
+public class JwtFilter {
+
+    private static final String SECRET =
+            "mysecretkeymysecretkeymysecretkey123456"; // must be same in both services
+
+    private static final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+
+    // Generate token
+    public static String generateToken(String username) {
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
+                .signWith(key)
+                .compact();
+    }
+
+    // Validate token
+    public static boolean validate(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Extract username
+    public static String extractUsername(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject();
+    }
+}

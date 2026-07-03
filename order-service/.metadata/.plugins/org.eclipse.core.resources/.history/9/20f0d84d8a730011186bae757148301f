@@ -1,0 +1,9 @@
+package com.micro.customer_service.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.micro.customer_service.Entity.Customer;
+
+public interface CustomerRepo extends JpaRepository<Customer, Long>{
+	   Customer findByEmailAndPassword(String email, String password);
+}

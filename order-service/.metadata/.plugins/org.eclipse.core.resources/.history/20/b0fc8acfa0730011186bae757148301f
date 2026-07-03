@@ -1,0 +1,14 @@
+package com.micro.order_service.DTO;
+
+public class OrderResponse {
+
+    private Long orderId;
+    private String productName;
+    private int quantity;
+    private double price;
+
+    private Long customerId;
+    private String customerName;
+    private String email;
+    private String phone;
+}

@@ -1,0 +1,44 @@
+package com.micro.order_service.Service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.micro.order_service.Entity.Order;
+import com.micro.order_service.Repository.OrderRepo;
+
+@Service
+public class OrderService {
+
+    @Autowired
+    private OrderRepo repo;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    public OrderResponse getOrderById(Long id) {
+
+        Order order = repo.findById(id).orElse(null);
+
+        Customer customer =
+        restTemplate.getForObject(
+            "http://localhost:8081/customers/" + order.getCustomerId(),
+            Customer.class
+        );
+
+        OrderResponse response = new OrderResponse();
+
+        response.setOrderId(order.getId());
+        response.setProductName(order.getProductName());
+        response.setQuantity(order.getQuantity());
+        response.setPrice(order.getPrice());
+
+        response.setCustomerId(customer.getId());
+        response.setCustomerName(customer.getName());
+        response.setEmail(customer.getEmail());
+        response.setPhone(customer.getPhone());
+
+        return response;
+    }
+}

@@ -1,0 +1,59 @@
+package com.example.order_service.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import com.example.order_service.DTO.OrderResponseDto;
+import com.example.order_service.DTO.ProductDto;
+import com.example.order_service.Entity.Order;
+import com.example.order_service.Repository.OrderRepository;
+
+import reactor.core.publisher.Mono;
+
+@RestController
+
+@RequestMapping("/orders")
+public class OrderController {
+	
+	@Autowired
+	private OrderRepository orderrepo;
+	@Autowired
+	private WebClient.Builder WebClientBuilder;
+	
+	//create method to place order
+	@PostMapping("/placeOrder")
+	public Mono<ResponseEntity<OrderResponseDto>> placeOrder(@RequestBody Order order){
+	
+		
+		//fetch product details from product service
+		
+		return WebClientBuilder.build().get().uri("http://localhost:8081/products/" + order.getProductId()).retrieve()	
+				.bodyToMono(ProductDto.class).map(productDto->{
+					OrderResponseDto responseDto= new OrderResponseDto();
+					responseDto.setOrderId(order.getId());
+					responseDto.setProductId(order.getProductId());
+					responseDto.setQuantity(order.getQuantity());
+					
+					//set productDetails
+					
+					responseDto.setProductName(ProductDto.getName());
+					responseDto.setProductPrice(ProductDto.getPrice());
+					responseDto.setTotalPrice(order.getQuantity() * productDto.getPrice());
+					
+					//save order details to DB
+					
+					orderRepository.save(order);
+					return ResponseEntity.ok(responseDto);
+
+
+					
+				});
+		
+	}
+
+}

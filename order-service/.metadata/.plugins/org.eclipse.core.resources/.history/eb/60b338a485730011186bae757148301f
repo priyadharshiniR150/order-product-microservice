@@ -1,0 +1,5 @@
+package com.micro.customer_service.Service;
+
+public class CustomerService {
+
+}

@@ -1,0 +1,47 @@
+package com.micro.customer_service.Service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.micro.customer_service.Entity.Customer;
+import com.micro.customer_service.Repository.CustomerRepo;
+
+@Service
+public class CustomerService {
+
+    @Autowired
+    private CustomerRepo repository;
+
+    public Customer register(Customer customer) {
+
+        if (repository.findByEmail(customer.getEmail()).isPresent()) 
+        {
+            throw new RuntimeException("Email already exists");
+        }
+        customer.setPassword(passwordEncoder.encode(customer.getPassword()));
+        return repository.save(customer);
+    }
+
+    public Customer saveCustomer(Customer customer) {
+        return repository.save(customer);
+    }
+
+    public List<Customer> getAllCustomers() {
+        return repository.findAll();
+    }
+
+    public Customer getCustomerById(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    public Customer updateCustomer(Long id, Customer customer) {
+        customer.setCustomerId(id);
+        return repository.save(customer);
+    }
+
+    public void deleteCustomer(Long id) {
+        repository.deleteById(id);
+    }
+}

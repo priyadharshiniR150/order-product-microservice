@@ -1,0 +1,21 @@
+package com.micro.order_service.Controller;
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.micro.order_service.Service.OrderService;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @Autowired
+    private OrderService service;
+
+    @GetMapping("/{id}")
+    public Object getOrderById(@PathVariable Long id) {
+        return service.getOrderById(id);
+    }
+}

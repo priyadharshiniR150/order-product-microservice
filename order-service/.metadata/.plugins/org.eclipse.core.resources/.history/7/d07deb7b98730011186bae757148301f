@@ -1,0 +1,32 @@
+package com.micro.order_service.Service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.micro.order_service.Entity.Orders;
+import com.micro.order_service.Repository.OrderRepo;
+
+@Service
+public class OrderService {
+
+    @Autowired
+    private OrderRepo repository;
+
+    public Orders createOrder(Orders order) {
+        return repository.save(order);
+    }
+
+    public List<Orders> getAllOrders() {
+        return repository.findAll();
+    }
+
+    public Orders getOrderById(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    public void deleteOrder(Long id) {
+        repository.deleteById(id);
+    }
+}

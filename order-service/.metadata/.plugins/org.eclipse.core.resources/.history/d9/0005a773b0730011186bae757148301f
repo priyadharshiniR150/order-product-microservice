@@ -1,0 +1,93 @@
+package com.micro.order_service.DTO;
+
+public class OrderResponse {
+
+    public OrderResponse() {
+    }
+
+    public OrderResponse(Long orderId, String productName, int quantity, double price,
+                         Long customerId, String customerName, String email, String phone) {
+        this.orderId = orderId;
+        this.productName = productName;
+        this.quantity = quantity;
+        this.price = price;
+        this.customerId = customerId;
+        this.customerName = customerName;
+        this.email = email;
+        this.phone = phone;
+    }
+
+    private Long orderId;
+    private String productName;
+    private int quantity;
+    private double price;
+
+    private Long customerId;
+    private String customerName;
+    private String email;
+    private String phone;
+	public Long getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(Long orderId) {
+		this.orderId = orderId;
+	}
+
+	public String getProductName() {
+		return productName;
+	}
+
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
+
+	public int getQuantity() {
+		return quantity;
+	}
+
+	public void setQuantity(int quantity) {
+		this.quantity = quantity;
+	}
+
+	public double getPrice() {
+		return price;
+	}
+
+	public void setPrice(double price) {
+		this.price = price;
+	}
+
+	public Long getCustomerId() {
+		return customerId;
+	}
+
+	public void setCustomerId(Long customerId) {
+		this.customerId = customerId;
+	}
+
+	public String getCustomerName() {
+		return customerName;
+	}
+
+	public void setCustomerName(String customerName) {
+		this.customerName = customerName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+   
+}

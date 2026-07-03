@@ -1,0 +1,10 @@
+package com.micro.order_service.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import jakarta.persistence.criteria.Order;
+
+public interface OrderRepo extends JpaRepository<Order, Long> {
+	
+	
+}
