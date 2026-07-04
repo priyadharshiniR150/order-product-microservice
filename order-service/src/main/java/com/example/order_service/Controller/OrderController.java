@@ -2,6 +2,7 @@ package com.example.order_service.Controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +21,6 @@ import com.example.order_service.DTO.OrderResponseDto;
 import com.example.order_service.Entity.Order;
 import com.example.order_service.Repository.OrderRepository;
 
-import reactor.core.publisher.Mono;
-
 @RestController
 
 @RequestMapping("/orders")
@@ -31,95 +30,99 @@ public class OrderController {
 	private OrderRepository orderrepo;
 	@Autowired
 	private WebClient.Builder WebClientBuilder;
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
+
 	
 	//create method to place order
 	@PostMapping("/placeOrder")
-	public Mono<ResponseEntity<OrderResponseDto>> placeOrder(@RequestBody Order order){
-		  order.setStatus(OrderStatus.PENDING);
-		
-		//fetch product details from product service
-		
-		return WebClientBuilder.build().get().uri("http://localhost:8081/products/" + order.getProductId()).retrieve()	
-				.bodyToMono(ProductDto.class).map(productDto->{ 
-					OrderResponseDto responseDto= new OrderResponseDto();
-					responseDto.setProductId(order.getProductId());
-					responseDto.setQuantity(order.getQuantity());
-					responseDto.setStatus(order.getStatus()); 
-					//set productDetails
-					
-					responseDto.setProductName(productDto.getName());
-					responseDto.setProductPrice(productDto.getPrice());
-					responseDto.setTotalPrice(order.getQuantity() * productDto.getPrice());
-					
-					//save order details to DB
-					
-					orderrepo.save(order);
-					responseDto.setOrderId(order.getId());
-					responseDto.setMessage(AppConstants.SUCCESS);
-					return ResponseEntity.ok(responseDto);
+	public ResponseEntity<OrderResponseDto> placeOrder(@RequestBody Order order) {
 
+	    order.setStatus(OrderStatus.PENDING);
+	    
+	
 
-					
-				});
-		
+	    ProductDto productDto = getProduct(order.getProductId());
+
+	    OrderResponseDto responseDto = new OrderResponseDto();
+	    responseDto.setProductId(order.getProductId());
+	    responseDto.setQuantity(order.getQuantity());
+	    responseDto.setStatus(order.getStatus());
+
+	    responseDto.setProductName(productDto.getName());
+	    responseDto.setProductPrice(productDto.getPrice());
+	    responseDto.setTotalPrice(order.getQuantity() * productDto.getPrice());
+
+	    orderrepo.save(order);
+	    redisTemplate.delete("orders:list");
+
+	    responseDto.setOrderId(order.getId());
+	    responseDto.setMessage(AppConstants.SUCCESS);
+
+	    return ResponseEntity.ok(responseDto);  
+	   
 	}
 
 
+	@SuppressWarnings("unchecked")
 	@GetMapping("/list")
 	public List<OrderResponseDto> getAllOrders() {
-		
+
+	    String key = "orders:list";
+
+	    List<OrderResponseDto> cached =
+	        (List<OrderResponseDto>) redisTemplate.opsForValue().get(key);
+
+	    if (cached != null) {
+	        System.out.println("Orders fetched from Redis");
+	        return cached;
+	    }
+
+	    System.out.println("Orders fetched from DB");
 
 	    List<Order> orders = orderrepo.findAll();
 
-	    return orders.stream().map(order -> {
+	    List<OrderResponseDto> response = orders.stream()
+	            .map(order -> {
+	                ProductDto product = getProduct(order.getProductId());
 
-	        ProductDto product = WebClientBuilder.build()
-	                .get()
-	                .uri("http://localhost:8081/products/" + order.getProductId())
-	                .retrieve()
-	                .bodyToMono(ProductDto.class)
-	                .block();
+	                OrderResponseDto dto = new OrderResponseDto();
+	                dto.setOrderId(order.getId());
+	                dto.setProductId(order.getProductId());
+	                dto.setProductName(product.getName());
+	                dto.setQuantity(order.getQuantity());
+	                dto.setStatus(order.getStatus());
+	                dto.setProductPrice(product.getPrice());
+	                dto.setTotalPrice(order.getQuantity() * product.getPrice());
 
-	        OrderResponseDto dto = new OrderResponseDto();
-	        dto.setOrderId(order.getId());
-	        dto.setProductId(order.getProductId());
-	        dto.setProductName(product.getName());
-	        dto.setQuantity(order.getQuantity());
-	        dto.setStatus(order.getStatus());
-	        dto.setProductPrice(product.getPrice());
-	        dto.setTotalPrice(order.getQuantity() * product.getPrice());
-	        dto.setMessage(AppConstants.SUCCESS);
+	                return dto;
+	            }).toList();
 
-	        return dto;
+	    redisTemplate.opsForValue().set(key, response);
 
-	    }).toList();
+	    return response;
 	}
 	
 	@GetMapping("/{id}")
-	public Mono<ResponseEntity<OrderResponseDto>> getOrderById(@PathVariable Long id) {
+	public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long id) {
 
 	    Order order = orderrepo.findById(id)
 	            .orElseThrow(() -> new OrderNotFoundException(AppConstants.ORDER_NOT_FOUND));
 
-	    return WebClientBuilder.build()
-	            .get()
-	            .uri("http://localhost:8081/products/" + order.getProductId())
-	            .retrieve()
-	            .bodyToMono(ProductDto.class)
-	            .map(product -> {
+	    ProductDto product = getProduct(order.getProductId());
 
-	                OrderResponseDto response = new OrderResponseDto();
-	                response.setOrderId(order.getId());
-	                response.setProductId(order.getProductId());
-	                response.setProductName(product.getName());
-	                response.setQuantity(order.getQuantity());
-	                response.setStatus(order.getStatus()); 
-	                response.setProductPrice(product.getPrice());
-	                response.setTotalPrice(order.getQuantity() * product.getPrice());
-	                response.setMessage(AppConstants.SUCCESS);
+	    OrderResponseDto response = new OrderResponseDto();
+	    response.setOrderId(order.getId());
+	    response.setProductId(order.getProductId());
+	    response.setProductName(product.getName());
+	    response.setQuantity(order.getQuantity());
+	    response.setStatus(order.getStatus());
+	    response.setProductPrice(product.getPrice());
+	    response.setTotalPrice(order.getQuantity() * product.getPrice());
+	    response.setMessage(AppConstants.SUCCESS);
 
-	                return ResponseEntity.ok(response);
-	            });}
+	    return ResponseEntity.ok(response);
+	}
 	@PutMapping("/confirm/{id}")
 	public ResponseEntity<Order> confirmOrder(@PathVariable Long id) {
 
@@ -143,5 +146,29 @@ public class OrderController {
 
 	    return ResponseEntity.ok(order);
 	}
-	
-}
+	  private ProductDto getProduct(Long productId) {
+
+	        String key = "product:" + productId;
+
+	        ProductDto product = (ProductDto) redisTemplate.opsForValue().get(key);
+
+	        if (product != null) {
+	            System.out.println("Data fetched from Redis");
+	            return product;
+	        }
+
+	        System.out.println("Calling Product Service...");
+
+	        product = WebClientBuilder.build()
+	                .get()
+	                .uri("http://localhost:8081/products/" + productId)
+	                .retrieve()
+	                .bodyToMono(ProductDto.class)
+	                .block();
+
+	        redisTemplate.opsForValue().set(key, product);
+
+	        return product;
+	    }
+	}	
+
