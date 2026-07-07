@@ -24,21 +24,25 @@ public class ProductConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                .requestMatchers(HttpMethod.GET, "/products/**")
-                .hasAnyRole("ADMIN", "CUSTOMER")
+            	    .requestMatchers("/uploads/**").permitAll()
 
-                .requestMatchers(HttpMethod.POST, "/products/**")
-                .hasRole("ADMIN")
+            	    .requestMatchers(HttpMethod.GET, "/products/**")
+            	    .hasAnyRole("ADMIN", "CUSTOMER")
 
-                .requestMatchers(HttpMethod.PUT, "/products/**")
-                .hasRole("ADMIN")
+            	    .requestMatchers(HttpMethod.POST, "/products/**")
+            	    .hasRole("ADMIN")
 
-                .requestMatchers(HttpMethod.DELETE, "/products/**")
-                .hasRole("ADMIN")
+            	    .requestMatchers(HttpMethod.PUT, "/products/**")
+            	    .hasRole("ADMIN")
 
-                .anyRequest().authenticated()
-            )
+            	    .requestMatchers(HttpMethod.DELETE, "/products/**")
+            	    .hasRole("ADMIN")
 
+            	    .requestMatchers(HttpMethod.POST, "/upload/**")
+            	    .hasRole("ADMIN")
+
+            	    .anyRequest().authenticated()
+            	)
             .oauth2ResourceServer(oauth2 ->
                     oauth2.jwt(jwt ->
                             jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)

@@ -1,7 +1,11 @@
 package com.example.product_service.Controller;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,13 +15,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.common_module.Constants.AppConstants;
 import com.example.common_module.Dto.ProductDto;
 import com.example.common_module.Exception.ProductNotFoundException;
 import com.example.product_service.Entity.Product;
 import com.example.product_service.Repository.ProductRepository;
+
 
 @RestController
 @RequestMapping("/products")
@@ -74,6 +81,8 @@ public class ProductController {
 	            dto.setId(p.getId());
 	            dto.setName(p.getName());
 	            dto.setPrice(p.getPrice());
+	            dto.setImageUrl(p.getImageUrl());
+	         
 	            return dto;
 	        })
 	        .toList();
@@ -103,12 +112,12 @@ public class ProductController {
 	    dto.setId(product.getId());
 	    dto.setName(product.getName());
 	    dto.setPrice(product.getPrice());
+	    dto.setImageUrl(product.getImageUrl());
 
 	    redisTemplate.opsForValue().set(key, dto);
 
 	    return ResponseEntity.ok(dto);
 	}
-	
 	
 	
 }
