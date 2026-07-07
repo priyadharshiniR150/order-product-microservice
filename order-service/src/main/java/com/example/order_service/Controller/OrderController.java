@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -36,13 +37,15 @@ public class OrderController {
 	
 	//create method to place order
 	@PostMapping("/placeOrder")
-	public ResponseEntity<OrderResponseDto> placeOrder(@RequestBody Order order) {
+	public ResponseEntity<OrderResponseDto> placeOrder(
+	        @RequestBody Order order,
+	        @RequestHeader("Authorization") String token) {
 
 	    order.setStatus(OrderStatus.PENDING);
 	    
 	
-
-	    ProductDto productDto = getProduct(order.getProductId());
+	    System.out.println("TOKEN FROM GATEWAY = " + token);
+	    ProductDto productDto = getProduct(order.getProductId(), token);
 
 	    OrderResponseDto responseDto = new OrderResponseDto();
 	    responseDto.setProductId(order.getProductId());
@@ -66,7 +69,8 @@ public class OrderController {
 
 	@SuppressWarnings("unchecked")
 	@GetMapping("/list")
-	public List<OrderResponseDto> getAllOrders() {
+	public List<OrderResponseDto> getAllOrders(
+	        @RequestHeader("Authorization") String token) {
 
 	    String key = "orders:list";
 
@@ -84,7 +88,7 @@ public class OrderController {
 
 	    List<OrderResponseDto> response = orders.stream()
 	            .map(order -> {
-	                ProductDto product = getProduct(order.getProductId());
+	            	ProductDto product = getProduct(order.getProductId(), token);
 
 	                OrderResponseDto dto = new OrderResponseDto();
 	                dto.setOrderId(order.getId());
@@ -104,12 +108,13 @@ public class OrderController {
 	}
 	
 	@GetMapping("/{id}")
-	public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long id) {
+	public ResponseEntity<OrderResponseDto> getOrderById(
+	        @PathVariable Long id,
+	        @RequestHeader("Authorization") String token) {
 
 	    Order order = orderrepo.findById(id)
 	            .orElseThrow(() -> new OrderNotFoundException(AppConstants.ORDER_NOT_FOUND));
-
-	    ProductDto product = getProduct(order.getProductId());
+	    ProductDto product = getProduct(order.getProductId(), token);
 
 	    OrderResponseDto response = new OrderResponseDto();
 	    response.setOrderId(order.getId());
@@ -146,29 +151,28 @@ public class OrderController {
 
 	    return ResponseEntity.ok(order);
 	}
-	  private ProductDto getProduct(Long productId) {
+	private ProductDto getProduct(Long productId, String token) {
 
-	        String key = "product:" + productId;
+	    String key = "product:" + productId;
 
-	        ProductDto product = (ProductDto) redisTemplate.opsForValue().get(key);
+	    ProductDto product = (ProductDto) redisTemplate.opsForValue().get(key);
 
-	        if (product != null) {
-	            System.out.println("Data fetched from Redis");
-	            return product;
-	        }
-
-	        System.out.println("Calling Product Service...");
-
-	        product = WebClientBuilder.build()
-	                .get()
-	                .uri("http://localhost:8081/products/" + productId)
-	                .retrieve()
-	                .bodyToMono(ProductDto.class)
-	                .block();
-
-	        redisTemplate.opsForValue().set(key, product);
-
+	    if (product != null) {
+	        System.out.println("Data fetched from Redis");
 	        return product;
 	    }
-	}	
 
+	    System.out.println("Calling Product Service...");
+
+	    product = WebClientBuilder.build()
+	            .get()
+	            .uri("http://localhost:8081/products/" + productId)
+	            .header("Authorization", token)
+	            .retrieve()
+	            .bodyToMono(ProductDto.class)
+	            .block();
+
+	    redisTemplate.opsForValue().set(key, product);
+
+	    return product;
+	}}
