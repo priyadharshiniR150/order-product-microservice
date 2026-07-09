@@ -20,25 +20,55 @@ public class SecurityConfig {
 
         http.csrf(csrf -> csrf.disable())
 
-            .authorizeHttpRequests(auth -> auth
+        .authorizeHttpRequests(auth -> auth
 
-                .requestMatchers(HttpMethod.GET, "/orders/**")
-                .hasAnyRole("ADMIN","CUSTOMER")
+        	    // ================= CUSTOMER =================
 
-                .requestMatchers(HttpMethod.POST, "/orders/**")
-                .hasAnyRole("ADMIN", "CUSTOMER")
+        	    .requestMatchers("/cart/**")
+        	    .hasRole("CUSTOMER")
 
-                .requestMatchers(HttpMethod.PUT, "/orders/cancel/**")
-                .hasAnyRole("CUSTOMER","ADMIN")
+        	    .requestMatchers("/address/**")
+        	    .hasRole("CUSTOMER")
 
-                .requestMatchers(HttpMethod.PUT, "/orders/confirm/**")
-                .hasRole("ADMIN")
-                
-                .requestMatchers(HttpMethod.DELETE, "/orders/**")
-                .hasRole("ADMIN")
+        	    .requestMatchers(HttpMethod.POST, "/orders/placeOrder")
+        	    .hasRole("CUSTOMER")
 
-                .anyRequest().authenticated()
-            )
+        	    .requestMatchers(HttpMethod.POST, "/orders/buyNow")
+        	    .hasRole("CUSTOMER")
+
+        	    .requestMatchers(HttpMethod.PUT, "/orders/cancel/**")
+        	    .hasRole("CUSTOMER")
+
+        	    .requestMatchers(HttpMethod.GET, "/orders/{id}")
+        	    .hasRole("CUSTOMER")
+
+
+
+        	    // ================= ADMIN =================
+
+        	    .requestMatchers(HttpMethod.GET, "/orders/list")
+        	    .hasRole("ADMIN")
+
+        	    .requestMatchers(HttpMethod.PUT, "/orders/confirm/**")
+        	    .hasRole("ADMIN")
+
+        	    .requestMatchers(HttpMethod.PUT, "/orders/pack/**")
+        	    .hasRole("ADMIN")
+
+        	    .requestMatchers(HttpMethod.PUT, "/orders/ship/**")
+        	    .hasRole("ADMIN")
+
+        	    .requestMatchers(HttpMethod.PUT, "/orders/out-for-delivery/**")
+        	    .hasRole("ADMIN")
+
+        	    .requestMatchers(HttpMethod.PUT, "/orders/deliver/**")
+        	    .hasRole("ADMIN")
+
+        	    .requestMatchers(HttpMethod.DELETE, "/orders/**")
+        	    .hasRole("ADMIN")
+
+        	    .anyRequest().authenticated()
+        	)
 
             .oauth2ResourceServer(oauth2 ->
                     oauth2.jwt(jwt ->
