@@ -1,14 +1,9 @@
 package com.example.order_service.Entity;
 
 import com.example.common_module.Enum.OrderStatus;
+import com.example.common_module.Enum.PaymentStatus;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "orders")
@@ -18,27 +13,23 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long productId;
+    private Long userId;
 
-    private Integer quantity;
+    private Long addressId;
+
+    private String paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
+    private Double totalAmount;
+
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
-
+    
     public Order() {
     }
 
-    public Order(Long id, Long productId, Integer quantity) {
-        this.id = id;
-        this.productId = productId;
-        this.quantity = quantity;
-    }
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OrderStatus status) {
-        this.status = status;
-    }
 
     public Long getId() {
         return id;
@@ -48,19 +39,61 @@ public class Order {
         this.id = id;
     }
 
-    public Long getProductId() {
-        return productId;
+
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
-    public Integer getQuantity() {
-        return quantity;
+
+    public Long getAddressId() {
+        return addressId;
     }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
+
+    public void setAddressId(Long addressId) {
+        this.addressId = addressId;
     }
+
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public Double getTotalAmount() {
+        return totalAmount;
+    }
+
+
+    public void setTotalAmount(Double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+    
+    
 }

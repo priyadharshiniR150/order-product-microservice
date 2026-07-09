@@ -1,11 +1,9 @@
 package com.example.product_service.Controller;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,9 +13,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import com.example.common_module.Constants.AppConstants;
 import com.example.common_module.Dto.ProductDto;
@@ -91,6 +89,7 @@ public class ProductController {
 
 	    return products;
 	}
+	
 	@GetMapping("/{productId}")
 	public ResponseEntity<ProductDto> getProductById(@PathVariable Long productId) {
 

@@ -1,9 +1,12 @@
 package com.example.common_module.Enum;
 
 public enum OrderStatus {
-
-    PENDING,
-    CONFIRMED,
-    CANCELLED
+	 PENDING,
+	    CONFIRMED,
+	    PACKED,
+	    SHIPPED,
+	    OUT_FOR_DELIVERY,
+	    DELIVERED,
+	    CANCELLED
 
 }
