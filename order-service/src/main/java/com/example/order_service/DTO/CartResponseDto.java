@@ -18,6 +18,15 @@ public class CartResponseDto {
 
     private String message;
     private String imageUrl;
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getImageUrl() {
         return imageUrl;

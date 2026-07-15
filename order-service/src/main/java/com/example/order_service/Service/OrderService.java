@@ -14,8 +14,10 @@ import com.example.common_module.Enum.PaymentStatus;
 import com.example.common_module.Exception.OrderNotFoundException;
 import com.example.order_service.DTO.BuyNowRequestDto;
 import com.example.order_service.DTO.OrderResponseDto;
+import com.example.order_service.Entity.Address;
 import com.example.order_service.Entity.Order;
 import com.example.order_service.Entity.OrderItem;
+import com.example.order_service.Repository.AddressRepository;
 import com.example.order_service.Repository.OrderItemRepository;
 import com.example.order_service.Repository.OrderRepository;
 
@@ -34,7 +36,8 @@ public class OrderService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-   
+    @Autowired
+    private AddressRepository addressrepo;
 
   
     public OrderResponseDto buyNow(BuyNowRequestDto request, String token) {
@@ -98,11 +101,45 @@ public class OrderService {
             dto.setTotalAmount(order.getTotalAmount());
             dto.setPaymentMethod(order.getPaymentMethod());
             dto.setStatus(order.getStatus());
-            dto.setMessage(AppConstants.SUCCESS);
+
+            Address address =
+                    addressrepo.findById(order.getAddressId()).orElse(null);
+
+            if (address != null) {
+
+                dto.setFullName(address.getName());
+                dto.setMobileNumber(address.getPhone());
+                dto.setStreet(address.getStreet());
+                dto.setCity(address.getCity());
+                dto.setState(address.getState());
+                dto.setPincode(address.getPincode());
+
+            }
+
+            List<OrderItem> items =
+                    orderItemRepository.findByOrderId(order.getId());
+
+            if (!items.isEmpty()) {
+
+                OrderItem item = items.get(0);
+
+                dto.setProductName(item.getProductName());
+                dto.setQuantity(item.getQuantity());
+                dto.setPrice(item.getPrice());
+
+                ProductDto product =
+                        getProduct(item.getProductId(), token);
+
+                if (product != null) {
+                    dto.setImageUrl(product.getImageUrl());
+                }
+
+            }
 
             return dto;
 
         }).toList();
+
     }
     public Order confirmOrder(Long id) {
     	  Order order = orderrepo.findById(id)
@@ -171,6 +208,19 @@ public class OrderService {
         orderrepo.save(order);
 
         return order;
+    }
+    public void deleteOrder(Long id) {
+
+        Order order = orderrepo.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(AppConstants.ORDER_NOT_FOUND));
+
+        orderrepo.delete(order);
+    }
+    public void deleteAllOrders() {
+
+        orderItemRepository.deleteAll();
+        orderrepo.deleteAll();
     }
     private ProductDto getProduct(Long productId, String token) {
     	 String key = "product:" + productId;

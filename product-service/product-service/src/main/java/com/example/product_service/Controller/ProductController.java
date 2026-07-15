@@ -4,119 +4,121 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 
 import com.example.common_module.Constants.AppConstants;
 import com.example.common_module.Dto.ProductDto;
 import com.example.common_module.Exception.ProductNotFoundException;
+import com.example.common_module.Util.UtilRedis;
 import com.example.product_service.Entity.Product;
 import com.example.product_service.Repository.ProductRepository;
-
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
-	@Autowired
-	private ProductRepository productRepo;
-	
-	@Autowired
-	private RedisTemplate<String, Object> redisTemplate;
-	
-	//create a product
-	
-	
-	@PostMapping
-	public ResponseEntity<Map<String, Object>> addProduct(@RequestBody Product product) {
 
-	    Product savedProduct = productRepo.save(product);
+    @Autowired
+    private ProductRepository productRepo;
 
-	    ProductDto dto = new ProductDto();
-	    dto.setId(savedProduct.getId());
-	    dto.setName(savedProduct.getName());
-	    dto.setPrice(savedProduct.getPrice());
+    @Autowired
+    private UtilRedis utilRedis;
 
-	    redisTemplate.delete("products:all");
-	    redisTemplate.opsForValue().set("product:" + savedProduct.getId(), dto);
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
-	    Map<String, Object> response = new HashMap<>();
-	    response.put("message", AppConstants.SUCCESS);
-	    response.put("data", savedProduct);
+    // Add Product
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> addProduct(@RequestBody Product product) {
 
-	    return ResponseEntity.ok(response);
-	}
+        Product savedProduct = productRepo.save(product);
 
-	@SuppressWarnings("unchecked")
-	@GetMapping
-	public List<ProductDto> getAllProduct() {
+        ProductDto dto = new ProductDto();
+        dto.setId(savedProduct.getId());
+        dto.setName(savedProduct.getName());
+        dto.setPrice(savedProduct.getPrice());
+        dto.setImageUrl(savedProduct.getImageUrl());
 
-	    String key = "products:all";
+        // Clear product list cache
+        redisTemplate.delete("products:all");
 
-	    List<ProductDto> cached =
-	        (List<ProductDto>) redisTemplate.opsForValue().get(key);
+        // Save single product cache
+        redisTemplate.opsForValue().set("product:" + savedProduct.getId(), dto);
 
-	    if (cached != null) {
-	        System.out.println("Products fetched from Redis");
-	        return cached;
-	    }
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", AppConstants.SUCCESS);
+        response.put("data", savedProduct);
 
-	    System.out.println("Products fetched from DB");
+        return ResponseEntity.ok(response);
+    }
 
-	    List<ProductDto> products = productRepo.findAll()
-	        .stream()
-	        .map(p -> {
-	            ProductDto dto = new ProductDto();
-	            dto.setId(p.getId());
-	            dto.setName(p.getName());
-	            dto.setPrice(p.getPrice());
-	            dto.setImageUrl(p.getImageUrl());
-	         
-	            return dto;
-	        })
-	        .toList();
+    // Get All Products
+    @GetMapping
+    @SuppressWarnings("unchecked")
+    public List<ProductDto> getAllProduct() {
 
-	    redisTemplate.opsForValue().set(key, products);
+        return utilRedis.getOrSet(
+                "products:all",
+                List.class,
+                () -> productRepo.findAll()
+                        .stream()
+                        .map(product -> {
+                            ProductDto dto = new ProductDto();
+                            dto.setId(product.getId());
+                            dto.setName(product.getName());
+                            dto.setPrice(product.getPrice());
+                            dto.setImageUrl(product.getImageUrl());
+                            return dto;
+                        })
+                        .toList()
+        );
+    }
 
-	    return products;
-	}
-	
-	@GetMapping("/{productId}")
-	public ResponseEntity<ProductDto> getProductById(@PathVariable Long productId) {
+    // Get Product By Id
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable Long productId) {
 
-	    String key = "product:" + productId;
+        ProductDto dto = utilRedis.getOrSet(
+                "product:" + productId,
+                ProductDto.class,
+                () -> {
 
-	    ProductDto cached = (ProductDto) redisTemplate.opsForValue().get(key);
+                    Product product = productRepo.findById(productId)
+                            .orElseThrow(() ->
+                                    new ProductNotFoundException(AppConstants.PRODUCT_NOT_FOUND));
 
-	    if (cached != null) {
-	        System.out.println("Product fetched from Redis");
-	        return ResponseEntity.ok(cached);
-	    }
+                    ProductDto p = new ProductDto();
+                    p.setId(product.getId());
+                    p.setName(product.getName());
+                    p.setPrice(product.getPrice());
+                    p.setImageUrl(product.getImageUrl());
 
-	    System.out.println("Product fetched from DB");
+                    return p;
+                });
 
-	    Product product = productRepo.findById(productId)
-	            .orElseThrow(() -> new ProductNotFoundException(AppConstants.PRODUCT_NOT_FOUND));
+        return ResponseEntity.ok(dto);
+    }
 
-	    ProductDto dto = new ProductDto();
-	    dto.setId(product.getId());
-	    dto.setName(product.getName());
-	    dto.setPrice(product.getPrice());
-	    dto.setImageUrl(product.getImageUrl());
+    // Delete Product
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long productId) {
 
-	    redisTemplate.opsForValue().set(key, dto);
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(AppConstants.PRODUCT_NOT_FOUND));
 
-	    return ResponseEntity.ok(dto);
-	}
-	
-	
+        productRepo.delete(product);
+
+        // Remove cache
+        redisTemplate.delete("products:all");
+        redisTemplate.delete("product:" + productId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Product deleted successfully");
+
+        return ResponseEntity.ok(response);
+    }
+
 }

@@ -92,7 +92,7 @@ public class CartService {
     	        ProductDto product = getProduct(cart.getProductId(), token);
 
     	        CartResponseDto dto = new CartResponseDto();
-
+    	        dto.setId(cart.getId()); 
     	        dto.setProductId(cart.getProductId());
     	        dto.setProductName(cart.getProductName());
     	        dto.setProductPrice(cart.getProductPrice());

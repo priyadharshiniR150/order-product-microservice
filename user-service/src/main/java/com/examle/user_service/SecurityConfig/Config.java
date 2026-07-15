@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+
 @Configuration
 public class Config {
 
@@ -16,24 +17,27 @@ public class Config {
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    	http
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/users/login",
-                "/users/register",
-           
-                "/oauth2/jwks"
-            ).permitAll()
-            .anyRequest().authenticated()
-        )
 
+        http
+            .cors(cors -> {})   // <-- Add this line
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/users/login",
+                    "/users/register",
+                    "/oauth2/jwks"
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
             .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
 
         return http.build();
     }
+    
+    
+   
 }
